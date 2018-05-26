@@ -46,6 +46,7 @@ function handleEvent(event) {
   } else if (event.message.type === 'image') {
     return downloadContent(event.message.id)
       .then(saveContent)
+      .then((path) => saveMessageInfo(event, path))
       .then(client.replyMessage(event.replyToken, { type: 'text', text: '画像アップロードしたよ' }))
   } else {
     return Promise.resolve(null);
@@ -65,39 +66,15 @@ function downloadContent(messageId) {
     }));
 }
 
-function saveContent(path) {
-  return admin.storage().bucket().upload(path);
+function saveContent(imagePath) {
+  return admin.storage().bucket().upload(imagePath).then(() => path.basename(imagePath));
 }
 
-// function downloadContent(messageId) {
-//   console.log(messageId);
-//   var data = [];
-//   return client.getMessageContent(messageId)
-//     .then((stream) => new Promise((resolve, reject) => {
-//       stream.on('data', (chunk) => data.push(new Buffer(chunk)));
-//       stream.on('end', () => {
-//         console.log(data.length);
-//         resolve(Buffer.concat(data));
-//       });
-//       stream.on('error', (err)=> {
-//         console.log(err);
-//         reject(err);
-//       });
-//     }))
-//     .catch((err) => {
-//       console.log(err);
-//       reject(err);
-//     });
-// }
-
-// Take the text parameter passed to this HTTP endpoint and insert it into the
-// Realtime Database under the path /messages/:pushId/original
-exports.addMessage = functions.https.onRequest((req, res) => {
-  // Grab the text parameter.
-  const original = req.query.text;
-  // Push the new message into the Realtime Database using the Firebase Admin SDK.
-  return admin.database().ref('/messages').push({original: original}).then((snapshot) => {
-    // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
-    return res.redirect(303, snapshot.ref.toString());
-  });
-});
+function saveMessageInfo(info, image) {
+  var savedInfo = {
+    source: info.source,
+    timestamp: info.timestamp,
+    image: image,
+  }
+  return admin.database().ref('/messages').push(savedInfo);
+}

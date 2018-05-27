@@ -3,6 +3,7 @@ const line = require('@line/bot-sdk');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const dl = require('datalib');
 const cloudinary = require('cloudinary');
 
 const admin = require('firebase-admin');
@@ -77,4 +78,49 @@ function saveMessageInfo(info, image) {
     image: image,
   }
   return admin.database().ref('/messages').push(savedInfo);
+}
+
+exports.rank = functions.https.onRequest((request, response) => {
+  Promise.resolve()
+    .then(getUploadRank)
+    .then((result) => response.json(result))
+    .catch((err) => {
+      console.error(err);
+      response.status(500).end();
+    });
+});
+
+function getUploadRank() {
+  return admin.database().ref('/messages').once('value')
+    .then((snapshot) => {
+      var rank = calcRank(snapshot);
+      return getLineUserInfo(rank);
+    });
+}
+
+function calcRank(snapshot) {
+  var val = snapshot.val();
+  var data = Object.keys(val).map((key) => {
+    return val[key];
+  });
+
+  var dlData = dl.read(data);
+  var count = dl.groupby('source.userId').count().execute(dlData).sort(dl.comparator('-count'));
+  var rank = count.map((data, index) => Object.assign({
+    'rank': index + 1
+  }, data));
+
+  return rank;
+}
+
+function getLineUserInfo(data) {
+  return Promise.all(data.map((d) => {
+    return client.getProfile(d['source.userId'])
+      .then((profile) => {
+        var newData = Object.assign({'profile': profile}, d);
+        delete newData['source.userId'];
+        return newData;
+      })
+      .catch(Promise.reject);
+  }));
 }

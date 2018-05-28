@@ -6,24 +6,25 @@ const fs = require('fs');
 const dl = require('datalib');
 const cloudinary = require('cloudinary');
 
+// Firebase
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-// create LINE SDK config from env variables
+// LINE
 const config = {
   channelAccessToken: functions.config().line.channel_access_token,
   channelSecret: functions.config().line.channel_secret,
 };
-
-// create LINE SDK client
 const client = new line.Client(config);
 
+// cloudinary
 cloudinary.config({
   cloud_name: functions.config().cloudinary.cloud_name,
   api_key: functions.config().cloudinary.api_key,
   api_secret: functions.config().cloudinary.api_secret
 });
 
+/** Lineからのwebhookを処理して画像を保存する */
 exports.line = functions.https.onRequest((request, response) => {
   Promise
     .all(request.body.events.map(handleEvent))
@@ -34,6 +35,12 @@ exports.line = functions.https.onRequest((request, response) => {
     });
 });
 
+/**
+ * LineからのWebhookを処理する。
+ * 
+ * @param {any} event 
+ * @returns 
+ */
 function handleEvent(event) {
   console.log(JSON.stringify(event));
   if (event.type !== 'message') {
@@ -54,6 +61,12 @@ function handleEvent(event) {
   }
 }
 
+/**
+ * Lineに投稿されたコンテンツを取得する
+ * 
+ * @param {any} messageId 
+ * @returns 
+ */
 function downloadContent(messageId) {
   const tmpPath = path.join(os.tmpdir(), messageId + '.jpg');
   return client.getMessageContent(messageId)
@@ -67,10 +80,23 @@ function downloadContent(messageId) {
     }));
 }
 
+/**
+ * Storageにファイルを保存する。
+ * 
+ * @param {any} imagePath 
+ * @returns 
+ */
 function saveContent(imagePath) {
   return admin.storage().bucket().upload(imagePath).then(() => path.basename(imagePath));
 }
 
+/**
+ * メッセージの情報（投稿者、時間、画像）を保存する。
+ * 
+ * @param {any} info 
+ * @param {any} image 
+ * @returns 
+ */
 function saveMessageInfo(info, image) {
   var savedInfo = {
     source: info.source,
@@ -80,6 +106,7 @@ function saveMessageInfo(info, image) {
   return admin.database().ref('/messages').push(savedInfo);
 }
 
+/** 投稿のランキングを集計し、結果を返す。 */
 exports.rank = functions.https.onRequest((request, response) => {
   Promise.resolve()
     .then(getUploadRank)
@@ -90,14 +117,25 @@ exports.rank = functions.https.onRequest((request, response) => {
     });
 });
 
+/**
+ * 投稿のランキングを取得する。
+ * 
+ * @returns 
+ */
 function getUploadRank() {
   return admin.database().ref('/messages').once('value')
     .then((snapshot) => {
       var rank = calcRank(snapshot);
-      return getLineUserInfo(rank);
+      return appendLineUserInfo(rank);
     });
 }
 
+/**
+ * ユーザIDをキーにしてカウント集計し、ランキングを計算する。
+ * 
+ * @param {any} snapshot 
+ * @returns 
+ */
 function calcRank(snapshot) {
   var val = snapshot.val();
   var data = Object.keys(val).map((key) => {
@@ -113,7 +151,13 @@ function calcRank(snapshot) {
   return rank;
 }
 
-function getLineUserInfo(data) {
+/**
+ * ユーザIDからLineのプロファイル情報を取得し付与する。
+ * 
+ * @param {any} data 
+ * @returns 
+ */
+function appendLineUserInfo(data) {
   return Promise.all(data.map((d) => {
     return client.getProfile(d['source.userId'])
       .then((profile) => {

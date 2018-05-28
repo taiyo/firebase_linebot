@@ -1,4 +1,5 @@
 const functions = require('firebase-functions');
+const cors = require('cors')({origin: true});
 const line = require('@line/bot-sdk');
 const path = require('path');
 const os = require('os');
@@ -108,13 +109,15 @@ function saveMessageInfo(info, image) {
 
 /** 投稿のランキングを集計し、結果を返す。 */
 exports.rank = functions.https.onRequest((request, response) => {
-  Promise.resolve()
-    .then(getUploadRank)
-    .then((result) => response.json(result))
-    .catch((err) => {
-      console.error(err);
-      response.status(500).end();
-    });
+  cors(request, response, () => {
+    Promise.resolve()
+      .then(getUploadRank)
+      .then((result) => response.json(result))
+      .catch((err) => {
+        console.error(err);
+        response.status(500).end();
+      });
+  });
 });
 
 /**

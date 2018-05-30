@@ -13,7 +13,7 @@
 
 <script>
 
-import VueGallery from 'vue-gallery' // eslint-disable-line
+import VueGallery from 'vue-gallery'
 
 export default {
   data: function () {

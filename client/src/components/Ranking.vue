@@ -6,7 +6,6 @@
 import Axios from 'axios'
 
 export default {
-  name: 'HelloWorld',
   data () {
     return {
       columns: [

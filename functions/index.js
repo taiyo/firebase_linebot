@@ -88,7 +88,15 @@ function downloadContent(messageId) {
  * @returns 
  */
 function saveContent(imagePath) {
-  return admin.storage().bucket().upload(imagePath).then(() => path.basename(imagePath));
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.uploader.upload(imagePath, (err, result) => {
+      if (err) return reject(err);
+      resolve(result);
+    });
+  })
+  .then((cloudinary) => admin.database().ref('/cloudinary').push(cloudinary))
+  .then(admin.storage().bucket().upload(imagePath))
+  .then(() => path.basename(imagePath));
 }
 
 /**

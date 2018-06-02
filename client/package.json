@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "line_photo_gallery",
   "version": "1.0.0",
   "description": "A Vue.js project",
   "author": "taiyo <taiyo.kato.1209@gmail.com>",
@@ -16,9 +16,11 @@
   "dependencies": {
     "axios": "^0.18.0",
     "buefy": "^0.6.5",
+    "firebase": "^5.0.4",
     "vue": "^2.5.2",
     "vue-gallery": "^1.3.5",
-    "vue-router": "^3.0.1"
+    "vue-router": "^3.0.1",
+    "vuefire": "^1.4.5"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

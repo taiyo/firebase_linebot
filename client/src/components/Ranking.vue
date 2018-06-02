@@ -3,7 +3,12 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import Axios from 'axios'
+import Buefy from 'buefy'
+import 'buefy/lib/buefy.css'
+
+Vue.use(Buefy)
 
 export default {
   data () {

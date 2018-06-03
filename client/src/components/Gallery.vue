@@ -37,7 +37,7 @@ export default {
 
   computed: {
     images () {
-      return this.cloudinary.map(e => {
+      return this.cloudinary.filter(e => e.resource_type === 'image').map(e => {
         var url = e.url
         var thumUrl = url.replace(/\/v(.*)\//g, '/c_pad,b_black,h_128,w_128/')
         return {
@@ -50,26 +50,30 @@ export default {
     }
   },
 
-  updated: function () {
+  updated () {
     if (!this.isInit) {
       this.isInit = true
     } else {
       if (!this.isLoading) {
-      this.isLoading = true
-      var img = document.getElementsByTagName('img')
-      var targetImg = img[img.length - 2];
-      var animationImg = document.getElementById("animation-image")
-      targetImg.classList.add('disp-none')
-      animationImg.classList.add("rotate-anime")
-      setTimeout(() => {
-          this.isLoading = false;
-          targetImg.classList.remove('disp-none')
-          animationImg.classList.remove('rotate-anime')
-        }, 3000)
+        var lastData = cloudinary[cloudinary.length - 1];
+        // 動画は一旦保留
+        if (lastData.resource_type === 'video') return;
+
+        this.isLoading = true
+        var img = document.getElementsByTagName('img')
+        var targetImg = img[img.length - 2];
+        var animationImg = document.getElementById("animation-image")
+        targetImg.classList.add('disp-none')
+        animationImg.classList.add("rotate-anime")
+        setTimeout(() => {
+            this.isLoading = false;
+            targetImg.classList.remove('disp-none')
+            animationImg.classList.remove('rotate-anime')
+          }, 3000)
+        }
       }
     }
   }
-}
 </script>
 
 <style>

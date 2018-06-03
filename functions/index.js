@@ -49,12 +49,13 @@ function handleEvent(event) {
     return Promise.resolve(null);
   }
 
-  if (event.message.type === 'text') {
+  var messageType = event.message.type;
+  if (messageType === 'text') {
     const echo = { type: 'text', text: event.message.text };
     return client.replyMessage(event.replyToken, echo);
-  } else if (event.message.type === 'image') {
-    return downloadContent(event.message.id)
-      .then(saveContent)
+  } else if (messageType === 'image' || messageType === 'video') {
+    return downloadContent(event.message.id, messageType)
+      .then((path) => saveContent(path, messageType))
       .then((path) => saveMessageInfo(event, path))
       .then(client.replyMessage(event.replyToken, { type: 'text', text: '画像アップロードしたよ' }))
   } else {
@@ -68,8 +69,9 @@ function handleEvent(event) {
  * @param {any} messageId 
  * @returns 
  */
-function downloadContent(messageId) {
-  const tmpPath = path.join(os.tmpdir(), messageId + '.jpg');
+function downloadContent(messageId, type) {
+  var ext = type === 'image' ? '.jpg' : '.mp4';
+  const tmpPath = path.join(os.tmpdir(), messageId + ext);
   return client.getMessageContent(messageId)
     .then((stream) => new Promise((resolve, reject) => {
       const writable = fs.createWriteStream(tmpPath);
@@ -87,12 +89,19 @@ function downloadContent(messageId) {
  * @param {any} imagePath 
  * @returns 
  */
-function saveContent(imagePath) {
+function saveContent(imagePath, type) {
   return new Promise((resolve, reject) => {
-    cloudinary.v2.uploader.upload(imagePath, (err, result) => {
-      if (err) return reject(err);
-      resolve(result);
-    });
+    if (type === 'image') {
+      cloudinary.v2.uploader.upload(imagePath, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    } else {
+      cloudinary.v2.uploader.upload(imagePath, { resource_type: "video" }, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    }
   })
   .then((cloudinary) => admin.database().ref('/cloudinary').push(cloudinary))
   .then(admin.storage().bucket().upload(imagePath))

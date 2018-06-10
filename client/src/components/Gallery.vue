@@ -1,6 +1,6 @@
 <template>
   <div>
-    <vue-picture-swipe :items="images"></vue-picture-swipe>
+    <vue-picture-swipe :items="images" :options="options"></vue-picture-swipe>
     <img v-bind:src="images.length > 0 ? images[images.length - 1].src : ''" id="animation-image" style="opacity: 0;">
   </div>
 </template>
@@ -16,7 +16,6 @@ Vue.use(VueFire)
 
 Vue.component('vue-picture-swipe', VuePictureSwipe);
 
-// var firebaseApp = firebase.initializeApp({})
 var firebaseApp = firebase.initializeApp({
   apiKey: process.env.FIREBASE_API_KEY,
   databaseURL: process.env.FIREBASE_DATABASE_URL
@@ -31,7 +30,10 @@ export default {
   data: function () {
     return {
       isLoading: false,
-      isInit: false
+      isInit: false,
+      options: {
+        errorMsg: '<div class="pswp__error-msg"><a href="%url%" target="_blank">こちら</a>から参照ください。</div>'
+      }
     }
   },
 
@@ -42,6 +44,7 @@ export default {
         var thumUrl = url.replace(/\/v(\d*)\//g, '/c_pad,b_black,h_128,w_128/')
         if (e.resource_type === 'video') {
           thumUrl = thumUrl.replace(/\/([^/]*)mp4/g, '/l_video_32/$1jpg')
+          // url = thumUrl.replace(/c_pad,b_black,h_128,w_128/, '')
         }
         return {
           src: url,

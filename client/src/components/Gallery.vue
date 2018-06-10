@@ -37,9 +37,12 @@ export default {
 
   computed: {
     images () {
-      return this.cloudinary.filter(e => e.resource_type === 'image').map(e => {
+      return this.cloudinary.map(e => {
         var url = e.url
-        var thumUrl = url.replace(/\/v(.*)\//g, '/c_pad,b_black,h_128,w_128/')
+        var thumUrl = url.replace(/\/v(\d*)\//g, '/c_pad,b_black,h_128,w_128/')
+        if (e.resource_type === 'video') {
+          thumUrl = thumUrl.replace(/\/([^/]*)mp4/g, '/l_video_32/$1jpg')
+        }
         return {
           src: url,
           thumbnail: thumUrl,

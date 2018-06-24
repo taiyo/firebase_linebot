@@ -52,7 +52,8 @@ function handleEvent(event) {
   var messageType = event.message.type;
   if (messageType === 'text') {
     const echo = { type: 'text', text: event.message.text };
-    return client.replyMessage(event.replyToken, echo);
+    return saveTextMessage(event)
+      .then(client.replyMessage(event.replyToken, { type: 'text', text: functions.config().line.text_reply_message }))
   } else if (messageType === 'image' || messageType === 'video') {
     return downloadContent(event.message.id, messageType)
       .then((path) => saveContent(path, messageType))
@@ -61,6 +62,20 @@ function handleEvent(event) {
   } else {
     return Promise.resolve(null);
   }
+}
+
+/**
+ * テキストメッセージを保存する
+ * 
+ * @param {*} event 
+ */
+function saveTextMessage(event) {
+  var info = {
+    source: event.source,
+    timestamp: event.timestamp,
+    message: event.message,
+  }
+  return admin.database().ref('/texts').push(info);
 }
 
 /**

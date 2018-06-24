@@ -57,7 +57,7 @@ function handleEvent(event) {
     return downloadContent(event.message.id, messageType)
       .then((path) => saveContent(path, messageType))
       .then((path) => saveMessageInfo(event, path))
-      .then(client.replyMessage(event.replyToken, { type: 'text', text: '画像アップロードしたよ' }))
+      .then(client.replyMessage(event.replyToken, { type: 'text', text: functions.config().line.uploaded_message }))
   } else {
     return Promise.resolve(null);
   }

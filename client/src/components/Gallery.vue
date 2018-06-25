@@ -1,7 +1,7 @@
 <template>
   <div>
     <vue-picture-swipe :items="images" :options="options"></vue-picture-swipe>
-    <img v-bind:src="images.length > 0 ? images[images.length - 1].src : ''" id="animation-image" style="opacity: 0;">
+    <img v-bind:src="images.length > 0 ? images[0].src : ''" id="animation-image" style="opacity: 0;">
   </div>
 </template>
 
@@ -41,7 +41,7 @@ export default {
     images () {
       return this.cloudinary.map(e => {
         var url = e.url
-        var thumUrl = url.replace(/\/v(\d*)\//g, '/c_pad,b_black,h_128,w_128/')
+        var thumUrl = url.replace(/\/v(\d*)\//g, '/c_pad,b_white,h_128,w_128/')
         if (e.resource_type === 'video') {
           thumUrl = thumUrl.replace(/\/([^/]*)mp4/g, '/l_video_32/$1jpg')
           // url = thumUrl.replace(/c_pad,b_black,h_128,w_128/, '')
@@ -53,6 +53,7 @@ export default {
           h: e.height
         }
       })
+      .reverse()
     }
   },
 
@@ -61,13 +62,13 @@ export default {
       this.isInit = true
     } else {
       if (!this.isLoading) {
-        var lastData = cloudinary[cloudinary.length - 1];
+        var lastData = this.cloudinary[0];
         // 動画は一旦保留
         if (lastData.resource_type === 'video') return;
 
         this.isLoading = true
         var img = document.getElementsByTagName('img')
-        var targetImg = img[img.length - 2];
+        var targetImg = img[0];
         var animationImg = document.getElementById("animation-image")
         targetImg.classList.add('disp-none')
         animationImg.classList.add("rotate-anime")
@@ -83,9 +84,9 @@ export default {
 </script>
 
 <style>
-html {
+/* html {
   background-color: black
-}
+} */
 .disp-none {
   display: none;
 }

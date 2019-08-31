@@ -193,11 +193,58 @@ function calcRank(snapshot) {
  * @returns 
  */
 function appendLineUserInfo(data) {
+  console.log(data);
   return Promise.all(data.map((d) => {
+    console.log(d['source.userId']);
+    
     return client.getProfile(d['source.userId'])
       .then((profile) => {
+        console.log(profile);
+        
         var newData = Object.assign({'profile': profile}, d);
         delete newData['source.userId'];
+        return newData;
+      })
+      .catch(Promise.reject);
+  }));
+}
+
+/** 投稿情報のリストを返す */
+exports.list = functions.https.onRequest((request, response) => {
+  cors(request, response, () => {
+    Promise.resolve()
+      .then(getUploadedList)
+      .then((result) => response.json(result))
+      .catch((err) => {
+        console.error(err);
+        response.status(500).end();
+      });
+  });
+});
+
+function getUploadedList() {
+  return admin.database().ref('/messages').once('value')
+    .then((snapshot) => {
+      console.log(snapshot);
+      var val = snapshot.val();
+      var data = Object.keys(val).map((key) => {
+        return val[key];
+      });
+      return appendLineUserInfo2(data);
+    });
+}
+
+function appendLineUserInfo2(data) {
+  console.log(data);
+  return Promise.all(data.map((d) => {
+    console.log(d.source.userId);
+    
+    return client.getProfile(d.source.userId)
+      .then((profile) => {
+        console.log(profile);
+        
+        var newData = Object.assign({'profile': profile}, d);
+        delete newData.source.userId;
         return newData;
       })
       .catch(Promise.reject);
